@@ -1,4 +1,4 @@
-# VQA_2017_ChallengeWinner
+# Bottom-Up and Top-Down Attention for Image Captioning and Visual Question Answering
 Pytorch implementation for 2017 VQA Challenge Winner [Bottom-Up and Top-Down Attention for Image Captioning and Visual Question Answering]. 
 
 ## Prerequisites
