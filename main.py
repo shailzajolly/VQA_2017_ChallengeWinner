@@ -1,15 +1,11 @@
 from __future__ import division, print_function, absolute_import
 
-import os
-import pdb
 import time
 import random
-import argparse
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 from tqdm import tqdm
 
 from model import Model
@@ -22,7 +18,7 @@ def evaluate(val_loader, model, epoch, device, logger):
     model.eval()
 
     batches = len(val_loader)
-    for step, (v, q, a, q_lens, _, _) in enumerate(tqdm(val_loader, ascii=True)):
+    for step, (v, q, a, q_lens, _, _, _) in enumerate(tqdm(val_loader, ascii=True)):
         v = v.to(device)
         q = q.to(device)
         a = a.to(device)
@@ -43,7 +39,7 @@ def train(train_loader, model, optim, epoch, device, logger):
 
     batches = len(train_loader)
     start = time.time()
-    for step, (v, q, a, q_lens, _, _) in enumerate(train_loader):
+    for step, (v, q, a, q_lens, _, _, _) in enumerate(train_loader):
         data_time = time.time() - start
 
         v = v.to(device)

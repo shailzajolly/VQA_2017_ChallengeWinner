@@ -3,7 +3,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import os
-import pdb
 import pickle
 
 import torch
@@ -47,7 +46,8 @@ class VQAv2(Dataset):
                 'q': que,
                 'a': ans,
                 'q_txt': qa['question'],
-                'a_txt': qa['answer']
+                'a_txt': qa['answer'],
+                'q_id': qa['question_id']
             })
 
     def __len__(self):
@@ -58,7 +58,8 @@ class VQAv2(Dataset):
                torch.Tensor(self.vqas[idx]['q']).long(), \
                torch.Tensor(self.vqas[idx]['a']), \
                self.vqas[idx]['q_txt'], \
-               self.vqas[idx]['a_txt']
+               self.vqas[idx]['a_txt'], \
+               self.vqas[idx]['question_id']
 
     @staticmethod
     def get_n_classes(fpath=os.path.join('data', 'dict_ans.pkl')):
@@ -86,13 +87,13 @@ def collate_fn(data):
 
     data.sort(key=lambda x: len(x[1]), reverse=True)
 
-    v, q, a, q_txt, a_txt = zip(*data)
+    v, q, a, q_txt, a_txt, q_id = zip(*data)
 
     v = merge(v)
     q, q_lens = merge_seq(q)
     a = merge(a)
 
-    return v, q ,a, q_lens, q_txt, a_txt
+    return v, q ,a, q_lens, q_txt, a_txt, q_id
 
 def prepare_data(args):
 
