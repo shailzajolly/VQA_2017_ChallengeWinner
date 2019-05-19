@@ -1,5 +1,5 @@
 import random
-import json
+import pickle
 
 import torch
 from torch import nn
@@ -49,7 +49,7 @@ def evaluate(eval_loader, model, device, loader_type):
         for idx, data in zip(joint_embed.cpu().numpy()):
             feats_data[idx] = data
 
-    json.dump(feats_data, open(loader_type+'_joint_feats.json', 'w+'))
+    pickle.dump(feats_data, open(loader_type+'_joint_feats.json', 'w+'))
 
 
 def main():
