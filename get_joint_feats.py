@@ -46,10 +46,10 @@ def evaluate(eval_loader, model, device, loader_type):
 
         joint_embed = model(v, q, q_lens)
 
-        for idx, data in zip(joint_embed.cpu().numpy()):
+        for idx, data in zip(q_id, joint_embed.cpu().detach().numpy()):
             feats_data[idx] = data
 
-    pickle.dump(feats_data, open(loader_type+'_joint_feats.json', 'w+'))
+    pickle.dump(feats_data, open('data'+loader_type+'_joint_feats_.pkl', 'wb'))
 
 
 def main():
@@ -78,10 +78,11 @@ def main():
     model = nn.DataParallel(model).to(device)
 
     if args.resume:
+        print("Initialized from ckpt: " + args.resume)
         ckpt = torch.load(args.resume, map_location=device)
         model.load_state_dict(ckpt['state_dict'], strict=False)
 
-    evaluate(train_loader, model, device, "train")
+    #evaluate(train_loader, model, device, "train")
     evaluate(val_loader, model, device, "val")
 
 if __name__ == "__main__":

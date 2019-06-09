@@ -24,27 +24,39 @@ class yn_dataset(Dataset):
         """
         if train:
             prefix = 'train'
+            datapath = os.path.join(root, 'data_non_yesno', 'non_yn_preds.pkl')
+            datapath1 = os.path.join(root, 'data_yesno', prefix + '_qa.pkl')
+            j_path = os.path.join(root, 'data_non_yesno', 'non_yn_val_joint_feats.pkl')
+            j_path1 = os.path.join(root, 'data_yesno', prefix + '_joint_feats.pkl')
         else:
             prefix = 'val'
+            datapath = os.path.join(root, 'data_yesno', prefix + '_qa.pkl')
+            j_path = os.path.join(root, 'data_yesno', prefix + '_joint_feats.pkl')
         print("Loading preprocessed files... ({})".format(prefix))
-        qas = pickle.load(open(os.path.join(root, prefix + '_qa.pkl'), 'rb'))
-        idx2ans, ans2idx = pickle.load(open(os.path.join(root, 'dict_ans.pkl'), 'rb'))
+        #qas = pickle.load(open(os.path.join(root, prefix + '_qa.pkl'), 'rb'))
+        idx2ans, ans2idx = pickle.load(open(os.path.join(root, 'data_yesno', 'dict_ans.pkl'), 'rb'))
 
-        joint_embed = pickle.load(open(os.path.join(root, prefix + '_joint_embed.pkl'), 'rb'))
-
+        #joint_embed = pickle.load(open(os.path.join(root, prefix + '_joint_feats.pkl'), 'rb'))
+        
+        if train:
+            qass = [pickle.load(open(datapath, 'rb')), pickle.load(open(datapath1, 'rb'))]
+            joint_embed = [pickle.load(open(j_path, 'rb')), pickle.load(open(j_path1, 'rb'))]
+        else:
+            qass = [pickle.load(open(datapath, 'rb'))]
+            joint_embed = [pickle.load(open(j_path, 'rb'))]
 
         print("Setting up everything... ({})".format(prefix))
         self.vqas = []
-        for qa in tqdm(qas):
+        for idxx, qas in enumerate(qass): 
+            for qa in tqdm(qas):
+                ans = np.zeros(len(idx2ans), dtype=np.float32)
+                for a, s in qa['answer']:
+                    ans[ans2idx[a]] = s
 
-            ans = np.zeros(len(idx2ans), dtype=np.float32)
-            for a, s in qa['answer']:
-                ans[ans2idx[a]] = s
-
-            self.vqas.append({
-                'j': joint_embed[qa['question_id']],
-                'a': ans
-            })
+                self.vqas.append({
+                    'j': joint_embed[idxx][qa['question_id']],
+                    'a': ans
+                })
 
     def __len__(self):
         return len(self.vqas)
@@ -54,14 +66,14 @@ class yn_dataset(Dataset):
                torch.Tensor(self.vqas[idx]['a'])
 
     @staticmethod
-    def get_n_classes(fpath=os.path.join('data', 'dict_ans.pkl')):
+    def get_n_classes(fpath=os.path.join('data', 'data_yesno', 'dict_ans.pkl')):
         idx2ans, _ = pickle.load(open(fpath, 'rb'))
         return len(idx2ans)
 
-    @staticmethod
-    def get_vocab_size(fpath=os.path.join('data', 'dict_q.pkl')):
-        idx2word, _ = pickle.load(open(fpath, 'rb'))
-        return len(idx2word)
+    #@staticmethod
+    #def get_vocab_size(fpath=os.path.join(root, 'data_non_yesno', 'dict_q.pkl')):
+    #    idx2word, _ = pickle.load(open(fpath, 'rb'))
+    #    return len(idx2word)
 
 
 def prepare_data(args):
@@ -76,9 +88,9 @@ def prepare_data(args):
                                              shuffle=False,
                                              num_workers=args.n_workers)
 
-    vocab_size = yn_dataset.get_vocab_size()
+    #vocab_size = yn_dataset.get_vocab_size()
     num_classes = yn_dataset.get_n_classes()
-    return train_loader, val_loader, vocab_size, num_classes
+    return train_loader, val_loader, num_classes
 
 
 class Model(nn.Module):
@@ -162,13 +174,13 @@ def main():
         device = torch.device('cuda')
         torch.cuda.manual_seed(args.seed)
 
-    train_loader, val_loader, vocab_size, num_answers = prepare_data(args)
+    train_loader, val_loader, num_answers = prepare_data(args)
 
     model = Model(args.word_embed_dim, args.hidden_size, num_answers)
     model = nn.DataParallel(model).to(device)
     logger.loginfo("Parameters: {:.3f}M".format(sum(p.numel() for p in model.parameters()) / 1e6))
 
-    optim = torch.optim.Adamax(model.parameters(), lr=2e-3)
+    optim = torch.optim.Adamax(model.parameters(), lr=5e-4)
 
     last_epoch = 0
     bscore = 0.0

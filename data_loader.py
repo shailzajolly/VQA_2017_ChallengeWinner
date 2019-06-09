@@ -21,10 +21,12 @@ class VQAv2(Dataset):
         """
         if train:
             prefix = 'train'
+            filepath = os.path.join('data', prefix + '_qa.pkl')
         else:
             prefix = 'val'
-        print("Loading preprocessed files... ({})".format(prefix))
-        qas = pickle.load(open(os.path.join(root, prefix + '_qa.pkl'), 'rb'))
+            filepath = os.path.join('data', prefix + '_qa.pkl')
+        print("Loading preprocessed fileis... ({})".format(prefix))
+        qas = pickle.load(open(filepath, 'rb'))
         idx2word, word2idx = pickle.load(open(os.path.join(root, 'dict_q.pkl'), 'rb'))
         idx2ans, ans2idx = pickle.load(open(os.path.join(root, 'dict_ans.pkl'), 'rb'))
 
@@ -59,7 +61,7 @@ class VQAv2(Dataset):
                torch.Tensor(self.vqas[idx]['a']), \
                self.vqas[idx]['q_txt'], \
                self.vqas[idx]['a_txt'], \
-               self.vqas[idx]['question_id']
+               self.vqas[idx]['q_id']
 
     @staticmethod
     def get_n_classes(fpath=os.path.join('data', 'dict_ans.pkl')):

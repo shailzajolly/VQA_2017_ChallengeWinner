@@ -2,6 +2,8 @@ from __future__ import division, print_function, absolute_import
 
 import time
 import random
+import pickle
+import os
 
 import torch
 import torch.nn as nn
@@ -14,22 +16,30 @@ from data_loader import prepare_data
 from arguments import get_args
 
 
-def evaluate(val_loader, model, epoch, device, logger):
+def evaluate(val_loader, model, epoch, device, logger, root):
     model.eval()
+    
+    idx2ans, _ = pickle.load(open(os.path.join(root, 'dict_ans.pkl'), 'rb')) 
+    preds_d = dict()
 
     batches = len(val_loader)
-    for step, (v, q, a, q_lens, _, _, _) in enumerate(tqdm(val_loader, ascii=True)):
+    for step, (v, q, a, q_lens, _, _, q_id) in enumerate(tqdm(val_loader, ascii=True)):
         v = v.to(device)
         q = q.to(device)
         a = a.to(device)
         q_lens = q_lens.to(device)
 
-        logits = model(v, q, q_lens)
+        logits = model(v, q, q_lens) # (batch_size, num_ans)
         loss = F.binary_cross_entropy_with_logits(logits, a) * a.size(1)
         score = compute_score(logits, a)
 
-        logger.batch_info_eval(epoch, step, batches, loss.item(), score)
+        preds = torch.max(logits, 1)[1].data
+        for idx, pred, ans in zip(q_id, preds, a.cpu().numpy()):
+            preds_d[idx] = (idx2ans[pred], ans[pred])
 
+        logger.batch_info_eval(epoch, step, batches, loss.item(), score)
+    
+    pickle.dump(preds_d, open('model_preds.pkl', 'wb'))
     score = logger.batch_info_eval(epoch, -1, batches)
     return score
 
@@ -105,7 +115,7 @@ def main():
         optim.load_state_dict(ckpt['optim_state_dict'])
 
     if args.mode == 'eval':
-        _ = evaluate(val_loader, model, last_epoch, device, logger)
+        _ = evaluate(val_loader, model, last_epoch, device, logger, args.data_root)
         return
 
     # Train

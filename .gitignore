@@ -1,5 +1,7 @@
+data
 data/
 __pycache__/
+log_dgx
 log_dgx/
 .idea/
 .ipynb_checkpoints/

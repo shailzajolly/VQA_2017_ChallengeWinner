@@ -19,10 +19,10 @@ nltk.download('punkt', download_dir='data')
 from nltk.tokenize import word_tokenize
 from tqdm import tqdm
 
-ta_path = os.path.join('data', 'v2_mscoco_train2014_annotations.json')
-va_path = os.path.join('data', 'v2_mscoco_val2014_annotations.json')
-tq_path = os.path.join('data', 'v2_OpenEnded_mscoco_train2014_questions.json')
-vq_path = os.path.join('data', 'v2_OpenEnded_mscoco_val2014_questions.json')
+ta_path = os.path.join('data', 'train_yes_no_vqa2_annotation.json')
+va_path = os.path.join('data', 'val_yesno_vqa2_annotation.json')
+tq_path = os.path.join('data', 'train_yesno_questions.json')
+vq_path = os.path.join('data', 'val_yesno_questions.json')
 glove_path = os.path.join('data', 'glove', 'glove.6B.300d.txt')
 vfeats_path = os.path.join('data', 'trainval_resnet101_faster_rcnn_genome_36.tsv')
 
